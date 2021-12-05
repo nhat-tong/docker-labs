@@ -1,0 +1,67 @@
+---
+
+- name: Remove old versions
+  apt:
+    pkg:
+    - docker
+    - docker-engine
+    - docker.io
+    - container
+    - runc
+    state: absent
+
+- name: Update apt packages
+  apt:
+    update_cache: yes
+    upgrade: no
+
+- name: Install packages
+  apt:
+    pkg:
+    - ca-certificates
+    - curl
+    - gnupg
+    - lsb-release
+    state: present
+
+- name: Check if Docker GPG key exists
+  stat:
+    path: /usr/share/keyrings/docker-archive-keyring.gpg
+  register: docker_gpg_key
+
+- name: Add Docker's official GPG key
+  shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  args:
+    warn: false
+  when: not docker_gpg_key.stat.exists
+
+- name: Set up the stable repository
+  shell: echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  args:
+    warn: false
+
+- name: Update apt packages
+  apt:
+    update_cache: yes
+    upgrade: no
+
+- name: Install Docker Engine
+  apt:
+    pkg:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    state: present
+
+- name: Enable docker service on boot
+  service:
+    name: docker
+    enabled: yes
+
+- name: Start docker service
+  service:
+    name: docker
+    state: started
+
+- name: Add current user to Docker group
+  shell: usermod -a -G docker cloud_user

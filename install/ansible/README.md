@@ -1,0 +1,1 @@
+ansible-playbook install-docker.yaml -i inventory.ini -e "ansible_become_pass=[YOUR_SUDO_PASS]"
