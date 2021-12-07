@@ -65,3 +65,22 @@
 
 - name: Add current user to Docker group
   shell: usermod -a -G docker cloud_user
+
+- name: Enable docker live restore
+  shell: |
+  cat > /etc/docker/daemon.json <<EOF
+  {
+    "live-restore": true
+  }
+  EOF
+
+- name: Reload docker daemon
+  service:
+    name: docker
+    state: reloaded
+
+- name: Install Docker Compose
+  shell: |
+    curl -L "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+    docker-compose --version
