@@ -1,0 +1,4 @@
+---
+
+- name: Install Docker on {{ ansible_facts['distribution'] }}
+  include: "{{ ansible_facts['distribution'] }}.yaml"

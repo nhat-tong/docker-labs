@@ -1,0 +1,19 @@
+---
+
+- name: Provision master node using kubeadm
+  hosts: "k8s-master"
+  gather_facts: true
+  become: true
+  roles:
+  - role: k8s-kubeadm-common
+  - role: k8s-kubeadm-master
+
+- name: Provision worker nodes using kubeadm
+  hosts: "k8s-worker"
+  gather_facts: true
+  become: true
+  vars:
+    kubeadm_join_command: "{{ hostvars['KUBEADM']['command'] }}"
+  roles:
+  - role: k8s-kubeadm-common
+  - role: k8s-kubeadm-worker

@@ -1,0 +1,48 @@
+---
+
+- name: Check admin.conf exists
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: k8s_conf
+
+- name: Initialize the Cluster if not exists
+  shell: kubeadm init --pod-network-cidr {{ POD_NETWORK_CIDR }}
+  when: not k8s_conf.stat.exists
+
+- name: Create .kube directory
+  become_user: "{{ ansible_user }}"
+  file:
+    path: $HOME/.kube
+    state: directory
+    mode: 0755
+
+- name: Copy Kubernetes admin.conf to .kube directory
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/{{ ansible_user }}/.kube/config
+    remote_src: yes
+
+- name: Set kubeconfig file permission
+  become_user: "{{ ansible_user }}"
+  file:
+    path: $HOME/.kube/config
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0644
+
+- name: Install Flanel Networking add-on
+  become_user: "{{ ansible_user }}"
+  shell: kubectl apply -f {{ KUBE_NETWORK_PLUGIN_URL }}
+
+- name: Get kubeadm join command
+  shell: kubeadm token create --print-join-command
+  register: kubeadm_join_command
+
+- name: Show join command
+  debug:
+    msg: "{{ kubeadm_join_command.stdout }}"
+
+- name: Add kubeadm join command to dummy host
+  add_host:
+    name: KUBEADM
+    command: "{{ kubeadm_join_command.stdout }}"

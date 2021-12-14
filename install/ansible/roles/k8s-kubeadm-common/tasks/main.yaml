@@ -1,0 +1,4 @@
+---
+
+- name: Create k8s cluster on {{ ansible_facts['distribution'] }}
+  include: "{{ ansible_facts['distribution'] }}.yaml"
